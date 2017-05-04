@@ -68,7 +68,7 @@ def gen_new_param():
     n = 1
     for x in dates:
         if x:
-            p = u'%s案件类型:民事案件,文书类型:判决书'%(x)
+            p = u'%s文书类型:判决书'%(x)
             # ipdb.set_trace()
             data = {today : n, 'param': p.strip()}
             t = param.find_one({'param': p.strip()})
@@ -81,7 +81,109 @@ def gen_new_param():
                 ndata = json.dumps(data)
                 logger.info('send to redis %s' % ndata)
                 r.lpush('court:start_urls', ndata)
+
 # gen_new_param()
+def gen_new_start_param(p, info):
+    today = datetime.datetime.now().strftime('%Y%m%d')
+    if u'裁判年份' not in p:
+        for zz in info['裁判年份'.decode('utf-8')]:
+            if zz:
+                new_p = u'%s,%s:%s'%(p, '裁判年份'.decode('utf-8'), zz)
+                data = {today: 1, 'param': new_p.strip()}
+                param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+    elif u'法院地域' not in p:
+        for a in info['法院地域'.decode('utf-8')]:
+            if a:
+                new_p = u'%s,%s:%s'%(p, '法院地域'.decode('utf-8'), a)
+                data = {today: 1, 'param': new_p.strip()}
+                param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+    elif u'关键词' not in p:
+        for a in info['关键词'.decode('utf-8')]:
+            if a:
+                new_p = u'%s,%s:%s'%(p, '关键词'.decode('utf-8'), a)
+                data = {today: 1, 'param': new_p.strip()}
+                param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+                ndata = {'param': new_p.strip()}
+                ndata = json.dumps(data)
+                logger.info('send to redis %s' % ndata)
+                r.lpush('court:start_urls', ndata)
+    # elif u'法院层级' not in p:
+        # for a in info[u'法院层级']:
+            # if a:
+                # new_p = '%s,法院层级:%s'(p, a)
+                # data = {today: 1, 'param': p.strip()}
+                # param.update_one({'param': new_p}, {'$set': data}, upsert=True)
+    elif u'一级案由' not in p:
+        for a in info['一级案由'.decode('utf-8')]:
+            if a:
+                new_p = u'%s,一级案由:%s'%(p, a)
+                data = {today: 1, 'param': new_p.strip()}
+                param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+    elif u'审判程序' not in p:
+        for a in info['审判程序'.decode('utf-8')]:
+            if a:
+                new_p = u'%s,审判程序:%s'%(p, a)
+                data = {today: 1, 'param': new_p.strip()}
+                param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+    elif u'二级案由' not in p:
+        info2 = category.find_one({u'二级案由': {'$exists': True}})
+        for a in info2['二级案由'.decode('utf-8')]:
+            if a:
+                new_p = u'%s,二级案由:%s'%(p, a)
+                data = {today: 1, 'param': new_p.strip()}
+                param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+    elif u'中级法院' not in p:
+        info2 = category.find({u'中级法院': {'$exists': True}})
+        courts = []
+        for b in info2:
+            for c in b['中级法院'.decode('utf-8')]:
+                courts.append((c, b['root']))
+        courts = list(set(courts))
+        for a in courts:
+            if a:
+                if a[1] not in p:
+                    new_p = u'%s,二级案由:%s'%(p, a)
+                    data = {today: 1, 'param': new_p.strip()}
+                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+    elif u'三级案由' not in p:
+        info2 = category.find({u'三级案由': {'$exists': True}})
+        courts = []
+        for b in info2:
+            for c in b['三级案由'.decode('utf-8')]:
+                courts.append((c, b['root']))
+        courts = list(set(courts))
+        for a in courts:
+            if a:
+                if a[1] not in p:
+                    new_p = u'%s,三级案由:%s'%(p, a)
+                    data = {today: 1, 'param': new_p.strip()}
+                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+    elif u'四级案由' not in p:
+        info2 = category.find({u'四级案由': {'$exists': True}})
+        courts = []
+        for b in info2:
+            for c in b['四级案由'.decode('utf-8')]:
+                courts.append((c, b['root']))
+        courts = list(set(courts))
+        for a in courts:
+            if a:
+                if a[1] not in p:
+                    new_p = u'%s,四级案由:%s'%(p, a)
+                    data = {today: 1, 'param': new_p.strip()}
+                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+    elif u'基层法院' not in p:
+        info2 = category.find({u'基层法院': {'$exists': True}})
+        courts = []
+        for b in info2:
+            for c in b['基层法院'.decode('utf-8')]:
+                courts.append((c, b['root']))
+        courts = list(set(courts))
+        for a in courts:
+            if a:
+                if a[1] not in p:
+                    new_p = u'%s,基层法院:%s'%(p, a)
+                    data = {today: 1, 'param': new_p.strip()}
+                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
 
 def send_court():
     print('start send_court ...')
@@ -93,10 +195,12 @@ def send_court():
     if param.find(query).count() == 0:
         # ipdb.set_trace()
         gen_new_param()
-        return
+        #  return
+    info = category.find_one({u'文书类型': {'$exists': True}})
     for p in param.find(query)[:20000]:
         page = p.get('page', [])
         if p.get('pages', 1) > 100:
+            gen_new_start_param(p.get('param', ''), info)
             continue
         if page:
             all_page = range(1, p.get('pages', 1)+1)
@@ -218,110 +322,11 @@ def process_items(r, keys, timeout, limit=0, log_every=1000, wait=.1):
                         )
                         logger.debug("[%s ==> %s] Processing param: %s pages: %s", source, 'court_param',
                                      item.get('param'), item.get('pages'))
-                    today = datetime.datetime.now().strftime('%Y%m%d')
                     if int(item.get('pages', '')) > 100:
                         info = category.find_one({u'文书类型': {'$exists': True}})
                         print('start to deal with more 100')
+                        gen_new_start_param(p, info)
                         # ipdb.set_trace()
-                        if u'裁判年份' not in p:
-                            for zz in info['裁判年份'.decode('utf-8')]:
-                                if zz:
-                                    new_p = u'%s,%s:%s'%(p, '裁判年份'.decode('utf-8'), zz)
-                                    data = {today: 1, 'param': new_p.strip()}
-                                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-                        elif u'法院地域' not in p:
-                            for a in info['法院地域'.decode('utf-8')]:
-                                if a:
-                                    new_p = u'%s,%s:%s'%(p, '法院地域'.decode('utf-8'), a)
-                                    data = {today: 1, 'param': new_p.strip()}
-                                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-                        elif u'关键词' not in p:
-                            for a in info['关键词'.decode('utf-8')]:
-                                if a:
-                                    new_p = u'%s,%s:%s'%(p, '关键词'.decode('utf-8'), a)
-                                    data = {today: 1, 'param': new_p.strip()}
-                                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-                                    ndata = {'param': new_p.strip()}
-                                    ndata = json.dumps(data)
-                                    logger.info('send to redis %s' % ndata)
-                                    r.lpush('court:start_urls', ndata)
-                        # elif u'法院层级' not in p:
-                            # for a in info[u'法院层级']:
-                                # if a:
-                                    # new_p = '%s,法院层级:%s'(p, a)
-                                    # data = {today: 1, 'param': p.strip()}
-                                    # param.update_one({'param': new_p}, {'$set': data}, upsert=True)
-                        elif u'一级案由' not in p:
-                            for a in info['一级案由'.decode('utf-8')]:
-                                if a:
-                                    new_p = u'%s,一级案由:%s'%(p, a)
-                                    data = {today: 1, 'param': new_p.strip()}
-                                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-                        elif u'审判程序' not in p:
-                            for a in info['审判程序'.decode('utf-8')]:
-                                if a:
-                                    new_p = u'%s,审判程序:%s'%(p, a)
-                                    data = {today: 1, 'param': new_p.strip()}
-                                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-                        elif u'二级案由' not in p:
-                            info2 = category.find_one({u'二级案由': {'$exists': True}})
-                            for a in info2['二级案由'.decode('utf-8')]:
-                                if a:
-                                    new_p = u'%s,二级案由:%s'%(p, a)
-                                    data = {today: 1, 'param': new_p.strip()}
-                                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-                        elif u'中级法院' not in p:
-                            info2 = category.find({u'中级法院': {'$exists': True}})
-                            courts = []
-                            for b in info2:
-                                for c in b['中级法院'.decode('utf-8')]:
-                                    courts.append((c, b['root']))
-                            courts = list(set(courts))
-                            for a in courts:
-                                if a:
-                                    if a[1] not in p:
-                                        new_p = u'%s,二级案由:%s'%(p, a)
-                                        data = {today: 1, 'param': new_p.strip()}
-                                        param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-                        elif u'三级案由' not in p:
-                            info2 = category.find({u'三级案由': {'$exists': True}})
-                            courts = []
-                            for b in info2:
-                                for c in b['三级案由'.decode('utf-8')]:
-                                    courts.append((c, b['root']))
-                            courts = list(set(courts))
-                            for a in courts:
-                                if a:
-                                    if a[1] not in p:
-                                        new_p = u'%s,三级案由:%s'%(p, a)
-                                        data = {today: 1, 'param': new_p.strip()}
-                                        param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-                        elif u'四级案由' not in p:
-                            info2 = category.find({u'四级案由': {'$exists': True}})
-                            courts = []
-                            for b in info2:
-                                for c in b['四级案由'.decode('utf-8')]:
-                                    courts.append((c, b['root']))
-                            courts = list(set(courts))
-                            for a in courts:
-                                if a:
-                                    if a[1] not in p:
-                                        new_p = u'%s,四级案由:%s'%(p, a)
-                                        data = {today: 1, 'param': new_p.strip()}
-                                        param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-                        elif u'基层法院' not in p:
-                            info2 = category.find({u'基层法院': {'$exists': True}})
-                            courts = []
-                            for b in info2:
-                                for c in b['基层法院'.decode('utf-8')]:
-                                    courts.append((c, b['root']))
-                            courts = list(set(courts))
-                            for a in courts:
-                                if a:
-                                    if a[1] not in p:
-                                        new_p = u'%s,基层法院:%s'%(p, a)
-                                        data = {today: 1, 'param': new_p.strip()}
-                                        param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
         except KeyError:
             logger.exception("[%s] Failed to process item:\n%r",
                              source, pprint.pformat(item))
@@ -366,6 +371,6 @@ if __name__ == '__main__':
             if check_redis_count < 100:
                 send_court()
                 # send_court_doc()
-            main(k)
+            #  main(k)
             print(' ==> sleep 180 s')
             time.sleep(10)
