@@ -21,7 +21,7 @@ from utils import get_redis as grs
 from utils import md5
 from logging import Formatter, StreamHandler, FileHandler
 from instance import faxin_req_info as req_info
-import ipdb
+import pdb
 import datetime
 import signal
 
@@ -50,10 +50,10 @@ r = grs(REDIS_URL)
 def get_date():
     dates = []
     now = datetime.datetime.now()
-    # default_date = datetime.datetime(2013, 7, 1, 0, 0)
-    # query_date = datetime.timedelta(days=1) + default_date
+    default_date = datetime.datetime(2013, 7, 1, 0, 0)
+    query_date = datetime.timedelta(days=1) + default_date
     # 爬取10天之内数据
-    query_date = now + datetime.timedelta(days=-1)
+    # query_date = now + datetime.timedelta(days=-1)
     while query_date < now:
         start = query_date.strftime('%Y-%m-%d')
         query_date += datetime.timedelta(days=1)
@@ -67,25 +67,23 @@ def gen_new_param():
     today = datetime.datetime.now().strftime('%Y%m%d')
     n = 1
     for x in dates:
-        if x:
-            p = u'%s文书类型:判决书'%(x)
-            # ipdb.set_trace()
-            data = {today : n, 'param': p.strip()}
-            t = param.find_one({'param': p.strip()})
-            print(p)
-            if not t:
-                n += 1
-                print(p)
+        for y in [u'刑事案由', u'民事案由', u'赔偿案由']:
+            if x:
+                p = u'%s文书类型:判决书,一级案由:%s'%(x,y)
+                data = {today : n, 'param': p.strip()}
+                t = param.find_one({'param': p.strip()})
                 param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
-                ndata = {'param': p.strip()}
-                ndata = json.dumps(data)
-                logger.info('send to redis %s' % ndata)
-                r.lpush('court:start_urls', ndata)
 
 # gen_new_param()
 def gen_new_start_param(p, info):
     today = datetime.datetime.now().strftime('%Y%m%d')
-    if u'裁判年份' not in p:
+    if u'一级案由' not in p:
+        for a in info['一级案由'.decode('utf-8')]:
+            if a:
+                new_p = u'%s,%s:%s'%(p, '一级案由'.decode('utf-8'), a)
+                data = {today: 1, 'param': new_p.strip()}
+                param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+    elif u'裁判年份' not in p:
         for zz in info['裁判年份'.decode('utf-8')]:
             if zz:
                 new_p = u'%s,%s:%s'%(p, '裁判年份'.decode('utf-8'), zz)
@@ -193,14 +191,18 @@ def send_court():
         # 'pages': {'$lte': 100},
     }
     if param.find(query).count() == 0:
-        # ipdb.set_trace()
-        gen_new_param()
+        pass
+    gen_new_param()
         #  return
     info = category.find_one({u'文书类型': {'$exists': True}})
-    for p in param.find(query)[:20000]:
+    for p in param.find(query):
         page = p.get('page', [])
         if p.get('pages', 1) > 100:
-            gen_new_start_param(p.get('param', ''), info)
+            if u'上传时间' in p.get('param', ''):
+                print(p)
+                gen_new_start_param(p.get('param', ''), info)
+            continue
+        if u'一级案由:民事案由' in p.get('param', ''):
             continue
         if page:
             all_page = range(1, p.get('pages', 1)+1)
@@ -248,9 +250,6 @@ def process_items(r, keys, timeout, limit=0, log_every=1000, wait=.1):
         ret = r.blpop(keys, timeout)
         # If data is found before the timeout then we consider we are done.
         if ret is None:
-            cnt = send_court_doc()
-            if not cnt:
-                send_court()
             time.sleep(wait)
             continue
 
@@ -312,7 +311,6 @@ def process_items(r, keys, timeout, limit=0, log_every=1000, wait=.1):
                 else:
                     p = item.get('param')
                     t = param.find_one({'param': item.get('param')})
-                    # ipdb.set_trace()
                     if t:
                         new = {'pages': item.get('pages', ''), 'update': int(time.time()), 'finished': 0}
                         param.update_one(
@@ -326,7 +324,6 @@ def process_items(r, keys, timeout, limit=0, log_every=1000, wait=.1):
                         info = category.find_one({u'文书类型': {'$exists': True}})
                         print('start to deal with more 100')
                         gen_new_start_param(p, info)
-                        # ipdb.set_trace()
         except KeyError:
             logger.exception("[%s] Failed to process item:\n%r",
                              source, pprint.pformat(item))
@@ -366,11 +363,9 @@ if __name__ == '__main__':
     while True:
         for k, v in item.items():
             check_redis_count = r.llen(v)
-            # ipdb.set_trace()
             print(' ==> redis-key remain: %s'%check_redis_count)
             if check_redis_count < 100:
                 send_court()
-                # send_court_doc()
-            #  main(k)
+            # main(k)
             print(' ==> sleep 180 s')
-            time.sleep(10)
+            time.sleep(180)
