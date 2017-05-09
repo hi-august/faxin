@@ -77,10 +77,10 @@ def gen_new_param():
                     param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
 
 # gen_new_param()
-def gen_new_start_param(param, info):
+def gen_new_start_param(pp, info):
     today = datetime.datetime.now().strftime('%Y%m%d')
-    source_type = param['type']
-    p = param['param']
+    source_type = pp['type']
+    p = pp['param']
     if u'裁判年份' not in p:
         for zz in info['裁判年份'.decode('utf-8')]:
             if zz:
@@ -321,6 +321,7 @@ def process_items(r, keys, timeout, limit=0, log_every=1000, wait=.1):
                                      item.get('param'), item.get('pages'))
                     if int(item.get('pages', '')) > 100:
                         info = category.find_one({u'文书类型': {'$exists': True}, 'type': item['type']})
+                        #  pdb.set_trace()
                         print('start to deal with more 100')
                         gen_new_start_param(item, info)
         except KeyError:
@@ -363,8 +364,8 @@ if __name__ == '__main__':
         for k, v in item.items():
             check_redis_count = r.llen(v)
             print(' ==> redis-key remain: %s'%check_redis_count)
-            if check_redis_count < 100:
-                send_court()
-            # main(k)
+            #  if check_redis_count < 100:
+                #  send_court()
+            main(k)
             print(' ==> sleep 180 s')
             time.sleep(180)
