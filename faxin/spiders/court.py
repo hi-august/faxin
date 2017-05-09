@@ -11,22 +11,6 @@ from bs4 import BeautifulSoup as bs
 class Court(RedisSpider):
     name = "court"
     redis_key = "court:start_urls"
-    #  regexes = [re.compile(m) for m in [
-        #  u'终结', u'审结',
-        #  u'请求', u'诉称', u'辩称', u'原告\S*证据', u'争议焦点', u'判决如下',
-        #  u'第三人\S*称',u'第三人\S*诉',u'第三人\S*请求',
-        #  u'书记员',
-    #  ]]
-    #  name_map = {
-        #  u'请求': 'claim',
-        #  u'诉称': 'accuser_hold_that',
-        #  u'辩称': 'defense_hold_that',
-        #  u'法院查明': 'court_find',
-        #  # u'法院认为': 'court_hold_that',
-        #  u'争议焦点': 'focus',
-        #  u'判决如下': 'result',
-        #  u'书记员': 'clerk',
-    #  }
 
     def __init__(self, *args, **kw):
         super(Court, self).__init__(*args, **kw)
@@ -73,7 +57,7 @@ class Court(RedisSpider):
                 method='post',
                 formdata=param,
                 # body=json.dumps(data),
-                meta={'param': param},
+                meta={'param': param, 'type': p['type']},
                 callback=self.check_item_count,
                 dont_filter=True,
             )
@@ -92,50 +76,6 @@ class Court(RedisSpider):
             tmp = '\n'.join(p.strings)
             if tmp.strip():
                 content.append(tmp.strip())
-        #  pdb.set_trace()
-        # check = {}
-        # clean_data = {}
-        # for p in info.find_all('div'):
-            # tmp = '\n'.join(p.strings)
-            # if tmp:
-                # content.append(tmp)
-                # for regex in self.regexes:
-                    # rm_empty_tmp = ''.join(tmp.split())
-                    # if regex.search(rm_empty_tmp):
-                        # k = regex.search(rm_empty_tmp).group(0)
-                        # i = content.index(tmp)
-                        # if k in check:
-                            # check[k].append(i)
-                        # else:
-                            # check[k] = [i, ]
-                        # # print name_map[k], k, i
-        # sub_case_name = '\n'.join(content[0:2])
-        # for x, y in check.items():
-            # c = min(y)
-            # # clean_data[self.name_map[x]] = content[c].split()[-1]
-            # if x == u'审结' or x == u'终结':
-                # # clean_data['trial'] = content[c]
-                # clean_data['basic_info'] = content[c]
-            # elif x == u'请求':
-                # clean_data['claim'] = content[c]
-            # elif x == u'诉称':
-                # clean_data['accuser_hold_that'] = content[c]
-            # elif x == u'辩称':
-                # clean_data['defense_hold_that'] = content[c]
-            # elif u'第三人' in x:
-                # clean_data['third_hold_that'] = content[c]
-            # elif u'证据' in x:
-                # clean_data['court_find'] = content[c]
-            # elif x == u'判决如下':
-                # clean_data['result'] = content[c]
-                # # clean_data['judges_basis'] = content[c]
-            # # elif x == u'法院查明':
-                # # clean_data['court_find'] = content[c]
-            # # elif x == u'书记员':
-                # # clean_data['clerk'] = content[c].split()[-1]
-                # # clean_data['judges'] = content[c-2].split()[-1]
-                # # clean_data['judge_date'] = content[c-1]
-
         attrs = dict(
             content=content,
             finished=1,
@@ -146,6 +86,7 @@ class Court(RedisSpider):
     def check_item_count(self, response):
         try:
             param = response.meta['param']
+            source_type= response.meta['type']
             try:
                 res = self.deal_with_content(response.body)
                 total = res[0]['Count']
@@ -158,7 +99,7 @@ class Court(RedisSpider):
                 pages = 1
             if pages > 100:
                 # pdb.set_trace()
-                yield {'big': True, 'page': [], 'pages': pages, 'param': param['Param'], 'item_list': []}
+                yield {'big': True, 'page': [], 'pages': pages, 'param': param['Param'], 'item_list': [], 'type': source_type}
                 return
             if 1 <= pages <= 100:
                 for page in range(1, pages+1):
@@ -169,7 +110,7 @@ class Court(RedisSpider):
                         uri,
                         method='post',
                         formdata=param,
-                        meta={'param': param},
+                        meta={'param': param, 'type': source_type},
                         callback=self.parse_get_item,
                         dont_filter=True,
                     )
@@ -180,6 +121,7 @@ class Court(RedisSpider):
     def parse_get_item(self, response):
         try:
             param = response.meta['param']
+            source_type= response.meta['type']
             res = self.deal_with_content(response.body)
             total = res[0]['Count']
             pages = int(round(int(total)/20.0))
@@ -214,7 +156,8 @@ class Court(RedisSpider):
                 'page': param['Index'],
                 'pages': pages,
                 'param': param['Param'],
-                'item_list': tmp
+                'item_list': tmp,
+                'type': source_type,
             }
         except Exception as e:
             print(e)

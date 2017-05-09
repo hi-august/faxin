@@ -70,37 +70,36 @@ def gen_new_param():
         for y in [u'刑事案件', u'行政案件', u'赔偿案件', u'执行案件']:
             if x:
                 p = u'%s文书类型:判决书,案件类型:%s'%(x,y)
-                data = {today : n, 'param': p.strip()}
                 t = param.find_one({'param': p.strip()})
                 if not t:
+                    data = {today : n, 'param': p.strip(), 'type': y}
                     print('insert %s'%(p))
                     param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
 
 # gen_new_param()
-def gen_new_start_param(p, info):
+def gen_new_start_param(param, info):
     today = datetime.datetime.now().strftime('%Y%m%d')
+    source_type = param['type']
+    p = param['param']
     if u'裁判年份' not in p:
         for zz in info['裁判年份'.decode('utf-8')]:
             if zz:
                 new_p = u'%s,%s:%s'%(p, '裁判年份'.decode('utf-8'), zz)
-                data = {today: 1, 'param': new_p.strip()}
+                data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                 param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'法院地域' not in p:
         for a in info['法院地域'.decode('utf-8')]:
             if a:
                 new_p = u'%s,%s:%s'%(p, '法院地域'.decode('utf-8'), a)
                 data = {today: 1, 'param': new_p.strip()}
+                data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                 param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'关键词' not in p:
         for a in info['关键词'.decode('utf-8')]:
             if a:
                 new_p = u'%s,%s:%s'%(p, '关键词'.decode('utf-8'), a)
-                data = {today: 1, 'param': new_p.strip()}
+                data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                 param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-                ndata = {'param': new_p.strip()}
-                ndata = json.dumps(data)
-                logger.info('send to redis %s' % ndata)
-                r.lpush('court:start_urls', ndata)
     # elif u'法院层级' not in p:
         # for a in info[u'法院层级']:
             # if a:
@@ -111,20 +110,20 @@ def gen_new_start_param(p, info):
         for a in info['一级案由'.decode('utf-8')]:
             if a:
                 new_p = u'%s,一级案由:%s'%(p, a)
-                data = {today: 1, 'param': new_p.strip()}
+                data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                 param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'审判程序' not in p:
         for a in info['审判程序'.decode('utf-8')]:
             if a:
                 new_p = u'%s,审判程序:%s'%(p, a)
-                data = {today: 1, 'param': new_p.strip()}
+                data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                 param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'二级案由' not in p:
-        info2 = category.find_one({u'二级案由': {'$exists': True}})
+        info2 = category.find_one({u'二级案由': {'$exists': True}, 'type': source_type})
         for a in info2['二级案由'.decode('utf-8')]:
             if a:
                 new_p = u'%s,二级案由:%s'%(p, a)
-                data = {today: 1, 'param': new_p.strip()}
+                data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                 param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'中级法院' not in p:
         info2 = category.find({u'中级法院': {'$exists': True}})
@@ -137,10 +136,10 @@ def gen_new_start_param(p, info):
             if a:
                 if a[1] not in p:
                     new_p = u'%s,二级案由:%s'%(p, a)
-                    data = {today: 1, 'param': new_p.strip()}
+                    data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                     param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'三级案由' not in p:
-        info2 = category.find({u'三级案由': {'$exists': True}})
+        info2 = category.find({u'三级案由': {'$exists': True}, 'type': source_type})
         courts = []
         for b in info2:
             for c in b['三级案由'.decode('utf-8')]:
@@ -150,7 +149,7 @@ def gen_new_start_param(p, info):
             if a:
                 if a[1] not in p:
                     new_p = u'%s,三级案由:%s'%(p, a)
-                    data = {today: 1, 'param': new_p.strip()}
+                    data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                     param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'四级案由' not in p:
         info2 = category.find({u'四级案由': {'$exists': True}})
@@ -163,7 +162,7 @@ def gen_new_start_param(p, info):
             if a:
                 if a[1] not in p:
                     new_p = u'%s,四级案由:%s'%(p, a)
-                    data = {today: 1, 'param': new_p.strip()}
+                    data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                     param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'基层法院' not in p:
         info2 = category.find({u'基层法院': {'$exists': True}})
@@ -176,13 +175,13 @@ def gen_new_start_param(p, info):
             if a:
                 if a[1] not in p:
                     new_p = u'%s,基层法院:%s'%(p, a)
-                    data = {today: 1, 'param': new_p.strip()}
+                    data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                     param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
 
 def send_court():
     print('start send_court ...')
     query = {
-        # 'param': {'$regex': '上传日期'},
+        'param': {'$regex': '上传日期'},
         # 'finished': {'$nin': [11, 1]},
         # 'finished': {'$exists': False},
         # 'pages': {'$lte': 100},
@@ -191,13 +190,13 @@ def send_court():
         pass
     gen_new_param()
         #  return
-    info = category.find_one({u'文书类型': {'$exists': True}})
     for p in param.find(query):
         page = p.get('page', [])
         if p.get('pages', 1) > 100:
             if u'上传日期' in p.get('param', ''):
+                info = category.find_one({u'文书类型': {'$exists': True}, 'type': p['type']})
                 print(p)
-                gen_new_start_param(p.get('param', ''), info)
+                gen_new_start_param(p, info)
         if u'上传日期' not in p.get('param', ''):
             continue
         if u'一级案由:民事案由' in p.get('param', ''):
@@ -223,7 +222,7 @@ def send_court():
             data = json.dumps(data)
             logger.info('send to redis %s' % data)
             r.lpush('court:start_urls', data)
-        data = {'param': p.get('param', '')}
+        data = {'param': p.get('param', ''), 'type': p['type']}
         data = json.dumps(data)
         logger.info('send to redis %s' % data)
         r.lpush('court:start_urls', data)
@@ -310,7 +309,7 @@ def process_items(r, keys, timeout, limit=0, log_every=1000, wait=.1):
                         )
                 else:
                     p = item.get('param')
-                    t = param.find_one({'param': item.get('param')})
+                    t = param.find_one({'param': p})
                     if t:
                         new = {'pages': item.get('pages', ''), 'update': int(time.time()), 'finished': 0}
                         param.update_one(
@@ -321,9 +320,9 @@ def process_items(r, keys, timeout, limit=0, log_every=1000, wait=.1):
                         logger.debug("[%s ==> %s] Processing param: %s pages: %s", source, 'court_param',
                                      item.get('param'), item.get('pages'))
                     if int(item.get('pages', '')) > 100:
-                        info = category.find_one({u'文书类型': {'$exists': True}})
+                        info = category.find_one({u'文书类型': {'$exists': True}, 'type': item['type']})
                         print('start to deal with more 100')
-                        gen_new_start_param(p, info)
+                        gen_new_start_param(item, info)
         except KeyError:
             logger.exception("[%s] Failed to process item:\n%r",
                              source, pprint.pformat(item))

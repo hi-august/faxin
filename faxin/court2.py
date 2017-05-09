@@ -10,6 +10,9 @@ import pymongo
 import time
 import re
 import datetime
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 # import ipdb
 
 db = pymongo.MongoClient(MONGODB_URL).faxin.court_category
@@ -21,7 +24,7 @@ db3 = pymongo.MongoClient().faxin.court_category
 # li = [u'金融借款合同纠纷', u'同业拆借纠纷', u'企业借贷纠纷', u'民间借贷纠纷', u'小额借款合同纠纷', u'金融不良债权追偿纠纷']
 info = db3.find_one({u'文书类型': {'$exists': True}})
 info2 = db.find_one({u'文书类型': {'$exists': True}})
-pdb.set_trace()
+#  pdb.set_trace()
 # query = {'pages': {'$gt': 100}, 'new6': 1}
 # more = db2.find(query)
 # for x in more:
@@ -79,7 +82,7 @@ def gen_new_param():
                 print p
                 data = {'new207': 1, 'param': p.strip()}
                 db2.update_one({'param': p}, {'$set': data}, upsert=True)
-gen_new_param()
+#  gen_new_param()
 #  info2 = db.find({u'四级案由': {'$exists': True}})
 #  for x in info:
     #  print(x['param'])
@@ -230,18 +233,6 @@ def deal_with_content(content):
     res = json.loads(res)
     return res
 
-regexes = [re.compile(m) for m in [
-    u'诉讼请求', u'原告诉称', u'被告辩称', u'法院查明', u'法院认为', u'争议焦点', u'判决结果',
-]]
-name_map = {
-    u'诉讼请求': 'claim',
-    u'原告诉称': 'accuser_hold_that',
-    u'被告辩称': 'defense_hold_that',
-    u'法院查明': 'court_find',
-    u'法院认为': 'court_hold_that',
-    u'争议焦点': 'focus',
-    u'判决结果': 'result'
-}
 def get(url):
     res = requests.get(url)
     start = res.content.find('{\\')
@@ -282,20 +273,21 @@ def get(url):
     # print(attrs)
     pdb.set_trace()
 
-def get_tree(url, reason, n):
+def get_tree(url, reason, n, n1):
     data = {
-        'Direction': 'asc',
-        'Index': '1',
-        'Order': u'法院层级',
-        'Page': '20',
+        #  'Direction': 'asc',
+        #  'Index': '1',
+        #  'Order': u'法院层级',
+        #  'Page': '20',
         # 'Param': u'文书类型:判决书,关键词:合同,审判程序:一审,裁判年份:2014,法院层级:高级法院,四级案由:租赁合同纠纷,基层法院:金塔县人民法院',
-        'Param': u'文书类型:判决书,文书类型:判决书,%s:%s'%(reason, n),
+        #  'Param': u'文书类型:判决书,文书类型:判决书,%s:%s'%(reason, n),
+        'Param': u'案件类型:%s,%s:%s'%(reason,n1,n),
         'parval': '%s'%n,
     }
-    #  pdb.set_trace()
     res = requests.post(url, data=data, headers=headers)
+    #  pdb.set_trace()
     res = deal_with_content(res.content)
-    d = {'root': n}
+    d = {'root': n1, 'type': reason, 'reason': n}
     for x in res:
         info = x['Child']
         tmp = []
@@ -316,7 +308,7 @@ def get_tree(url, reason, n):
 
             # except Exception as e:
                 # print(e)
-            if v not in tmp:
+            if v not in tmp and v:
                 tmp.append(v)
             d[k] = tmp
             tmp2 = k  + ':' + v
@@ -332,16 +324,26 @@ def get_tree(url, reason, n):
         #  pdb.set_trace()
 
     #  pdb.set_trace()
-    db.save(d)
+    if len(d) > 4:
+        db.save(d)
 
 
 url = 'http://wenshu.court.gov.cn/CreateContentJS/CreateContentJS.aspx?DocID=bba75203-22fe-4649-be2f-e3c37e3fa978'
 # get(url)
 #  url = 'http://wenshu.court.gov.cn/List/ListContent'
 # get_list(url)
-#  url = 'http://wenshu.court.gov.cn/List/TreeContent'
-url = 'http://wenshu.court.gov.cn/List/CourtTreeContent'
+url = 'http://wenshu.court.gov.cn/List/TreeContent'
+#  url = 'http://wenshu.court.gov.cn/List/CourtTreeContent'
 url = 'http://wenshu.court.gov.cn/List/ReasonTreeContent'
+for x in [u'刑事案件', u'行政案件', u'赔偿案件', u'执行案件']:
+    reason = u'三级案由'
+    t = db.find_one({'type': x, 'root': u'二级案由'})
+    if t:
+        reasons = t.get(reason, [])
+        for y in reasons:
+            if y:
+                get_tree(url, x, y, reason)
+
 #  info2 = db.find({u'四级案由': {'$exists': True}})
 #  for x in info2:
     #  #  if x:
