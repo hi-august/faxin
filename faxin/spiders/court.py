@@ -57,7 +57,7 @@ class Court(RedisSpider):
                 method='post',
                 formdata=param,
                 # body=json.dumps(data),
-                meta={'param': param, 'type': p['type']},
+                meta={'param': param, 'type': data['type']},
                 callback=self.check_item_count,
                 dont_filter=True,
             )
