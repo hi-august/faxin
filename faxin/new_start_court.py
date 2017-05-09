@@ -213,7 +213,7 @@ def send_court():
                     upsert=False,
                 )
             else:
-                data = {'param': p.get('param', ''), 'page': unfinished, 'pages': p.get('pages', 1)}
+                data = {'param': p.get('param', ''), 'page': unfinished, 'pages': p.get('pages', 1), 'type': p['type']}
                 data = json.dumps(data)
                 logger.info('send to redis %s' % data)
                 r.lpush('court:start_urls', data)
