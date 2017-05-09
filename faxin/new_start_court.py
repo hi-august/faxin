@@ -67,23 +67,19 @@ def gen_new_param():
     today = datetime.datetime.now().strftime('%Y%m%d')
     n = 1
     for x in dates:
-        for y in [u'刑事案由', u'民事案由', u'赔偿案由']:
+        for y in [u'刑事案件', u'行政案件', u'赔偿案件', u'执行案件']:
             if x:
-                p = u'%s文书类型:判决书,一级案由:%s'%(x,y)
+                p = u'%s文书类型:判决书,案件类型:%s'%(x,y)
                 data = {today : n, 'param': p.strip()}
                 t = param.find_one({'param': p.strip()})
-                param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
+                if not t:
+                    print('insert %s'%(p))
+                    param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
 
 # gen_new_param()
 def gen_new_start_param(p, info):
     today = datetime.datetime.now().strftime('%Y%m%d')
-    if u'一级案由' not in p:
-        for a in info['一级案由'.decode('utf-8')]:
-            if a:
-                new_p = u'%s,%s:%s'%(p, '一级案由'.decode('utf-8'), a)
-                data = {today: 1, 'param': new_p.strip()}
-                param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-    elif u'裁判年份' not in p:
+    if u'裁判年份' not in p:
         for zz in info['裁判年份'.decode('utf-8')]:
             if zz:
                 new_p = u'%s,%s:%s'%(p, '裁判年份'.decode('utf-8'), zz)
@@ -186,8 +182,9 @@ def gen_new_start_param(p, info):
 def send_court():
     print('start send_court ...')
     query = {
+        # 'param': {'$regex': '上传日期'},
         # 'finished': {'$nin': [11, 1]},
-        'finished': {'$exists': False},
+        # 'finished': {'$exists': False},
         # 'pages': {'$lte': 100},
     }
     if param.find(query).count() == 0:
@@ -198,11 +195,14 @@ def send_court():
     for p in param.find(query):
         page = p.get('page', [])
         if p.get('pages', 1) > 100:
-            if u'上传时间' in p.get('param', ''):
+            if u'上传日期' in p.get('param', ''):
                 print(p)
                 gen_new_start_param(p.get('param', ''), info)
+        if u'上传日期' not in p.get('param', ''):
             continue
         if u'一级案由:民事案由' in p.get('param', ''):
+            continue
+        if u'案件类型:民事案件' in p.get('param', ''):
             continue
         if page:
             all_page = range(1, p.get('pages', 1)+1)
