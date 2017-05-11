@@ -135,7 +135,7 @@ def gen_new_start_param(pp, info):
         for a in courts:
             if a:
                 if a[1] not in p:
-                    new_p = u'%s,二级案由:%s'%(p, a)
+                    new_p = u'%s,中级法院:%s'%(p, a[0])
                     data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                     param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'三级案由' not in p:
@@ -148,22 +148,22 @@ def gen_new_start_param(pp, info):
         for a in courts:
             if a:
                 if a[1] not in p:
-                    new_p = u'%s,三级案由:%s'%(p, a)
+                    new_p = u'%s,三级案由:%s'%(p, a[0])
                     data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                     param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
-    elif u'四级案由' not in p:
-        info2 = category.find({u'四级案由': {'$exists': True}})
-        courts = []
-        for b in info2:
-            for c in b['四级案由'.decode('utf-8')]:
-                courts.append((c, b['root']))
-        courts = list(set(courts))
-        for a in courts:
-            if a:
-                if a[1] not in p:
-                    new_p = u'%s,四级案由:%s'%(p, a)
-                    data = {today: 1, 'param': new_p.strip(), 'type': source_type}
-                    param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
+    # elif u'四级案由' not in p:
+        # info2 = category.find({u'四级案由': {'$exists': True}})
+        # courts = []
+        # for b in info2:
+            # for c in b['四级案由'.decode('utf-8')]:
+                # courts.append((c, b['root']))
+        # courts = list(set(courts))
+        # for a in courts:
+            # if a:
+                # if a[1] not in p:
+                    # new_p = u'%s,四级案由:%s'%(p, a)
+                    # data = {today: 1, 'param': new_p.strip(), 'type': source_type}
+                    # param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'基层法院' not in p:
         info2 = category.find({u'基层法院': {'$exists': True}})
         courts = []
@@ -174,7 +174,7 @@ def gen_new_start_param(pp, info):
         for a in courts:
             if a:
                 if a[1] not in p:
-                    new_p = u'%s,基层法院:%s'%(p, a)
+                    new_p = u'%s,基层法院:%s'%(p, a[0])
                     data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                     param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
 

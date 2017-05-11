@@ -33,7 +33,8 @@ regexes = [re.compile(m) for m in [
     # u'事实\S*理由', # 诉讼请求之后
     u'辩称', u'未到庭', u'未出庭', u'未答辩',  # 被告辩称
     u'原告\S*证据', u'法庭\S*质证', u'审理查明', u'确认\S*案件事实'
-    u'原审法院查明', u'原审法院认为', # two
+    u'原审法院查明', u'一审法院认定事实', u'原审法院认为', # two
+    u'一审法院查明', u'一审法院认定事实', u'一审法院认为', # two
     u'不服\S*上诉', u'不服\S*诉称',
     u'被上诉人\S*答辩',
     u'审理查明\S*事实',
@@ -76,10 +77,10 @@ def name_check(check, content, item):
                 clean_data['fact_and_reason'] = tmp[tmp.index('。事实'):][1:]
             else:
                 clean_data['accuser_hold_that'] = tmp
-        elif (u'原审法院认为' in x) and (court_proceeding == u'二审'):
+        elif (u'原审法院认为' in x or u'一审法院认为' in x) and (court_proceeding == u'二审'):
             clean_data['origin_court_think'] = content[c]
             flag2 = c
-        elif (u'原审法院查明' in x) and (court_proceeding == u'二审'):
+        elif (u'原审法院查明' in x or u'一审法院查明' in x or u'原审法院认定事实' in x or u'一审法院认定事实' in x) and (court_proceeding == u'二审'):
             flag3 = c
         elif (u'不服' in x) and (court_proceeding == u'二审'):
             clean_data['accuser_hold_that'] = content[c]
@@ -96,7 +97,8 @@ def name_check(check, content, item):
             clean_data['third_hold_that'] = content[c]
         elif (u'证据' in x) or (u'质证' in x) or (u'查明' in x) or (u'事实' in x) and (court_proceeding == u'一审'):
             # pdb.set_trace()
-            clean_data['court_find'] = content[c]
+            flag5 = c
+            # clean_data['court_find'] = content[c]
         elif x == u'判决如下':
             if '依照' in case_raw:
                 clean_data['judges_basis'] = case_raw[case_raw.rindex('依照'):]
@@ -161,7 +163,7 @@ def deal_court_clear_data():
     # for item in db.find({'finished': {'$in': [1]}}).batch_size(30):
     for item in db.find(
             {'finished': {'$in': [2, 3]}},
-            # {'doc_id': 'cdf4c700-a5a9-4553-8c56-9808656b1666'},
+            {'doc_id': 'ffaeb330-d20a-473f-ba71-f4850b94fc1b'},
             no_cursor_timeout=False
     ):
         # db.update({'doc_id': item['doc_id']}, {'$unset': {'clean_data': 1}})
