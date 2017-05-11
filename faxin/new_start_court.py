@@ -182,7 +182,7 @@ def send_court():
     print('start send_court ...')
     query = {
         'param': {'$regex': '上传日期'},
-        # 'finished': {'$nin': [11, 1]},
+        'finished': {'$nin': [11, 1]},
         # 'finished': {'$exists': False},
         # 'pages': {'$lte': 100},
     }
@@ -197,6 +197,7 @@ def send_court():
                 info = category.find_one({u'文书类型': {'$exists': True}, 'type': p['type']})
                 print(p)
                 gen_new_start_param(p, info)
+            continue
         if u'上传日期' not in p.get('param', ''):
             continue
         if u'一级案由:民事案由' in p.get('param', ''):
@@ -364,8 +365,7 @@ if __name__ == '__main__':
         for k, v in item.items():
             check_redis_count = r.llen(v)
             print(' ==> redis-key remain: %s'%check_redis_count)
-            #  if check_redis_count < 100:
-                #  send_court()
-            main(k)
+            if check_redis_count < 100:
+                send_court()
             print(' ==> sleep 180 s')
             time.sleep(180)
