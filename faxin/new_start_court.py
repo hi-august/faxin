@@ -85,7 +85,7 @@ def gen_new_param():
 # gen_new_param()
 def gen_new_start_param(pp, info):
     today = datetime.datetime.now().strftime('%Y%m%d')
-    source_type = pp['type']
+    source_type = pp.get('type', '')
     p = pp['param']
     if u'案件类型' not in p:
         for y in [u'刑事案件', u'行政案件', u'赔偿案件', u'执行案件']:
