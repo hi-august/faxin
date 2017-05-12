@@ -15,7 +15,7 @@ import ipdb
 path = os.path.abspath(os.getcwd())
 print(path)
 sys.path.append(path)
-from utils import md5
+#  from utils import md5
 
 
 class Faxin(RedisSpider):

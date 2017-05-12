@@ -51,7 +51,7 @@ class Court(RedisSpider):
                     dont_filter=True,
                 )
 
-        if u'文书类型' in data.get('param', ''):
+        if u'上传' in data.get('param', ''):
             return FormRequest(
                 uri,
                 method='post',
