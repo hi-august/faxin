@@ -383,8 +383,17 @@ if __name__ == '__main__':
     while True:
         for k, v in item.items():
             check_redis_count = r.llen(v)
+            if 'court:requests' in r.keys():
+                r.delete('court:requests')
+            if 'court2:requests' in r.keys():
+                r.delete('court2:requests')
+            if 'court:dupefilter' in r.keys():
+                r.delete('court:dupefilter')
+            if 'court2:dupefilter' in r.keys():
+                r.delete('court2:dupefilter')
             print(' ==> redis-key remain: %s'%check_redis_count)
             if check_redis_count < 100:
                 send_court()
+            # main(k)
             print(' ==> sleep 180 s')
             time.sleep(180)
