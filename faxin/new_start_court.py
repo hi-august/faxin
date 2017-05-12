@@ -47,6 +47,7 @@ category = MongoClient(MONGODB_URL).faxin.court_category
 
 r = grs(REDIS_URL)
 
+# 生成上传日期
 def get_date():
     dates = []
     now = datetime.datetime.now()
@@ -62,6 +63,7 @@ def get_date():
         dates.append(param)
     return dates
 
+# 生成新参数存储到mongodb
 def gen_new_param():
     dates = get_date()
     today = datetime.datetime.now().strftime('%Y%m%d')
@@ -83,6 +85,7 @@ def gen_new_param():
                     #  param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
 
 # gen_new_param()
+# 判断是否有关键词
 def gen_new_start_param(pp, info):
     today = datetime.datetime.now().strftime('%Y%m%d')
     source_type = pp.get('type', '')
@@ -191,6 +194,7 @@ def gen_new_start_param(pp, info):
                     data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                     param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
 
+# 发送参数到redis
 def send_court():
     print('start send_court ...')
     query = {
@@ -244,6 +248,7 @@ def send_court():
         logger.info('send to redis %s' % data)
         r.lpush('court:start_urls', data)
 
+# 发送doc_id到redis
 def send_court_doc():
     print('start court doc_id ...')
     query = {'finished': {'$exists': False}}
@@ -256,7 +261,7 @@ def send_court_doc():
         court.update_one({'doc_id': p.get('doc_id', '')}, {'$set': {'update_time': int(time.time())}})
     return cnt
 
-
+# 主loop循环
 def process_items(r, keys, timeout, limit=0, log_every=1000, wait=.1):
     limit = limit or float('inf')
     processed = 0
@@ -383,6 +388,7 @@ if __name__ == '__main__':
     while True:
         for k, v in item.items():
             check_redis_count = r.llen(v)
+            # 清理redis数据
             if 'court:requests' in r.keys():
                 r.delete('court:requests')
             if 'court2:requests' in r.keys():

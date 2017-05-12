@@ -62,6 +62,7 @@ class Court(RedisSpider):
                 dont_filter=True,
             )
 
+    # 具体页面
     def parse2(self, response):
         data = response.meta['data']
         body = response.body
@@ -83,6 +84,7 @@ class Court(RedisSpider):
         )
         yield attrs
 
+    # 检查时候存在item
     def check_item_count(self, response):
         try:
             param = response.meta['param']
@@ -118,6 +120,7 @@ class Court(RedisSpider):
             print(e)
             self.logger.info('[check_item_count] %s ==> %s', json.dumps(param), e)
 
+    # 获取具体列表
     def parse_get_item(self, response):
         try:
             param = response.meta['param']

@@ -70,6 +70,7 @@ class Faxin(RedisSpider):
             )
             pass
 
+    # 获取具体页面的item
     def parse_item2(self, response):
         data = response.meta['data']
         soup = bs(response.body, 'lxml')
@@ -243,6 +244,7 @@ class Faxin(RedisSpider):
         )
         yield attrs
 
+    # 获取具体list
     def parse_get_item(self, response):
         data = response.meta['data']['info']
         page = response.meta['page']
