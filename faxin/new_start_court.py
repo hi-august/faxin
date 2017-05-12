@@ -207,7 +207,10 @@ def send_court():
         page = p.get('page', [])
         if p.get('pages', 1) > 100:
             if u'上传日期' in p.get('param', ''):
-                info = category.find_one({u'文书类型': {'$exists': True}, 'type': p['type']})
+                if p['type']:
+                    info = category.find_one({u'文书类型': {'$exists': True}, 'type': p['type']})
+                else:
+                    info = category.find_one({u'文书类型': {'$exists': True}})
                 print(p)
                 gen_new_start_param(p, info)
             continue
@@ -334,7 +337,10 @@ def process_items(r, keys, timeout, limit=0, log_every=1000, wait=.1):
                         logger.debug("[%s ==> %s] Processing param: %s pages: %s", source, 'court_param',
                                      item.get('param'), item.get('pages'))
                     if int(item.get('pages', '')) > 100:
+                    if p['type']:
                         info = category.find_one({u'文书类型': {'$exists': True}, 'type': item['type']})
+                    else:
+                        info = category.find_one({u'文书类型': {'$exists': True}})
                         #  pdb.set_trace()
                         print('start to deal with more 100')
                         gen_new_start_param(item, info)
