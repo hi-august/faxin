@@ -70,7 +70,7 @@ def gen_new_param():
         p = x
         t = param.find_one({'param': p.strip()})
         if not t:
-            data = {today : n, 'param': p.strip()}
+            data = {today : n, 'param': p.strip(), 'type': ''}
             print('insert %s'%(p))
             param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
         #  for y in [u'刑事案件', u'行政案件', u'赔偿案件', u'执行案件']:
