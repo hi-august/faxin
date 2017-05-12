@@ -58,7 +58,7 @@ def get_date():
         start = query_date.strftime('%Y-%m-%d')
         query_date += datetime.timedelta(days=1)
         end = query_date.strftime('%Y-%m-%d')
-        param = u'上传日期:%s TO %s,'%(start, end)
+        param = u'上传日期:%s TO %s'%(start, end)
         dates.append(param)
     return dates
 
@@ -67,20 +67,34 @@ def gen_new_param():
     today = datetime.datetime.now().strftime('%Y%m%d')
     n = 1
     for x in dates:
-        for y in [u'刑事案件', u'行政案件', u'赔偿案件', u'执行案件']:
-            if x:
-                p = u'%s文书类型:判决书,案件类型:%s'%(x,y)
-                t = param.find_one({'param': p.strip()})
-                if not t:
-                    data = {today : n, 'param': p.strip(), 'type': y}
-                    print('insert %s'%(p))
-                    param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
+        p = x
+        t = param.find_one({'param': p.strip()})
+        if not t:
+            data = {today : n, 'param': p.strip()}
+            print('insert %s'%(p))
+            param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
+        #  for y in [u'刑事案件', u'行政案件', u'赔偿案件', u'执行案件']:
+            #  if x:
+                #  p = u'%s文书类型:判决书,案件类型:%s'%(x,y)
+                #  t = param.find_one({'param': p.strip()})
+                #  if not t:
+                    #  data = {today : n, 'param': p.strip(), 'type': y}
+                    #  print('insert %s'%(p))
+                    #  param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
 
 # gen_new_param()
 def gen_new_start_param(pp, info):
     today = datetime.datetime.now().strftime('%Y%m%d')
     source_type = pp['type']
     p = pp['param']
+    if u'案件类型' not in p:
+        for y in [u'刑事案件', u'行政案件', u'赔偿案件', u'执行案件']:
+            new_p = u'%s,案件类型:%s'%(p,y)
+            t = param.find_one({'param': new_p.strip()})
+            if not t:
+                data = {today : today, 'param': new_p.strip(), 'type': y}
+                print('insert %s'%(p))
+                param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
     if u'裁判年份' not in p:
         for zz in info['裁判年份'.decode('utf-8')]:
             if zz:
@@ -91,7 +105,6 @@ def gen_new_start_param(pp, info):
         for a in info['法院地域'.decode('utf-8')]:
             if a:
                 new_p = u'%s,%s:%s'%(p, '法院地域'.decode('utf-8'), a)
-                data = {today: 1, 'param': new_p.strip()}
                 data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                 param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'关键词' not in p:
