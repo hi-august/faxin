@@ -6,6 +6,7 @@ import json
 import pdb
 #  import re
 from bs4 import BeautifulSoup as bs
+import ipdb
 
 
 class Court(RedisSpider):
@@ -17,7 +18,7 @@ class Court(RedisSpider):
 
     def deal_with_content(self, content):
         res = content.replace('\\', '').strip('\"')
-        res = json.loads(res)
+        res = json.loads(res, strict=False)
         return res
 
     def make_requests_from_url(self, data):
