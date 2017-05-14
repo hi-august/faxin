@@ -30,6 +30,7 @@ name_map = {
 regexes = [re.compile(m) for m in [
     u'终结', u'审结',
     u'诉讼请求', u'诉称', u'诉请', u'起诉', # 诉讼请求 one
+    u'上诉请求',
     # u'事实\S*理由', # 诉讼请求之后
     u'辩称', u'未到庭', u'未出庭', u'未答辩',  # 被告辩称
     u'原告\S*证据', u'法庭\S*质证', u'审理查明', u'确认\S*案件事实'
@@ -67,24 +68,53 @@ def name_check(check, content, item):
             flag8 = c
         elif (u'号' in x):
             flag7 = c + 1
-        elif (x in [u'辩称', u'未答辩', u'未出庭', u'未到庭']) and (court_proceeding == u'一审'):
-            clean_data['defense_hold_that'] = content[c]
+        elif (x in [u'辩称', u'未答辩', u'未出庭', u'未到庭']):
+            if flag8 == c:
+                tmp = y.remove(c)
+                clean_data['defense_hold_that'] = content[min(tmp)]
+            else:
+                if x in [u'未答辩', u'未出庭', u'未到庭']:
+                    try:
+                        tmp = min([{len(content[b]):b} for b in y]).values()[0]
+                        pdb.set_trace()
+                        clean_data['defense_hold_that'] = content[tmp]
+                    except:
+                        clean_data['defense_hold_that'] = content[c]
+                else:
+                    clean_data['defense_hold_that'] = content[c]
+            # pdb.set_trace()
         elif (x in [u'诉讼请求', u'诉称', u'诉请', u'起诉']) and (court_proceeding == u'一审'):
             tmp = content[c]
-            if u'。事实' in tmp:
+            if u'。事实' in tmp and (court_proceeding == u'一审'):
                 # clean_data['claim'] = tmp[:tmp.index('。事实')] + '。'
                 clean_data['accuser_hold_that'] = tmp[:tmp.index('。事实')] + '。'
                 clean_data['fact_and_reason'] = tmp[tmp.index('。事实'):][1:]
             else:
                 clean_data['accuser_hold_that'] = tmp
+                # if not clean_data.get('accuser_hold_that', '') and (court_proceeding == u'二审'):
+                    # clean_data['accuser_hold_that'] = tmp
+            # pdb.set_trace()
+        elif (x in [u'上诉请求',]) and (court_proceeding == u'二审'):
+            tmp = content[c]
+            if u'。事实' in tmp and (court_proceeding == u'一审'):
+                # clean_data['claim'] = tmp[:tmp.index('。事实')] + '。'
+                clean_data['accuser_hold_that'] = tmp[:tmp.index('。事实')] + '。'
+                clean_data['fact_and_reason'] = tmp[tmp.index('。事实'):][1:]
+            else:
+                if not clean_data.get('accuser_hold_that', '') and (court_proceeding == u'二审'):
+                    clean_data['accuser_hold_that'] = tmp
         elif (u'原审法院认为' in x or u'一审法院认为' in x) and (court_proceeding == u'二审'):
             clean_data['origin_court_think'] = content[c]
-            flag2 = c
-        elif (u'原审法院查明' in x or u'一审法院查明' in x or u'原审法院认定事实' in x or u'一审法院认定事实' in x) and (court_proceeding == u'二审'):
+            # flag2 = c
             flag3 = c
+        elif (u'原审法院查明' in x or u'一审法院查明' in x or u'原审法院认定事实' in x or u'一审法院认定事实' in x) and (court_proceeding == u'二审'):
+            # flag3 = c
+            # pdb.set_trace()
+            flag2 = c
         elif (u'不服' in x) and (court_proceeding == u'二审'):
-            clean_data['accuser_hold_that'] = content[c]
-        elif (u'本院认为' in x) and (court_proceeding == u'二审'):
+            pass
+            # clean_data['accuser_hold_that'] = content[c]
+        elif (u'本院认为' in x):
             flag6 = c
             # clean_data['court_find'] = content[c]
         elif (u'被上诉人' in x) and (court_proceeding == u'二审'):
@@ -139,14 +169,15 @@ def name_check(check, content, item):
             clean_data['result'] = content[flag: min(tmp2)]
         except:
             pass
+    # pdb.set_trace()
     if flag2 and flag3:
         try:
-            clean_data['origin_court_find'] = content[flag2: flag3]
+            clean_data['origin_court_find'] = '|'.join(content[flag2: flag3])
         except:
             pass
     if flag5 and flag6:
         try:
-            clean_data['court_find'] = ' '.join(content[flag5 :flag6])
+            clean_data['court_find'] = '|'.join(content[flag5 :flag6])
         except:
             pass
     if flag7 and flag8:
@@ -163,7 +194,7 @@ def deal_court_clear_data():
     # for item in db.find({'finished': {'$in': [1]}}).batch_size(30):
     for item in db.find(
             {'finished': {'$in': [2, 3]}},
-            {'doc_id': 'ffaeb330-d20a-473f-ba71-f4850b94fc1b'},
+            # {'doc_id': 'ffaeb330-d20a-473f-ba71-f4850b94fc1b'},
             no_cursor_timeout=False
     ):
         # db.update({'doc_id': item['doc_id']}, {'$unset': {'clean_data': 1}})
@@ -186,6 +217,14 @@ def deal_court_clear_data():
                     rm_empty_tmp = ''.join(p.split())
                     if regex.search(rm_empty_tmp):
                         k = regex.search(rm_empty_tmp).group(0)
+                        i = content.index(p)
+                        if k in check:
+                            check[k].append(i)
+                        else:
+                            check[k] = [i, ]
+                    if regex.match(rm_empty_tmp):
+                        k = regex.match(rm_empty_tmp).group(0)
+                        check[k] = []
                         i = content.index(p)
                         if k in check:
                             check[k].append(i)
