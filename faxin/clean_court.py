@@ -69,19 +69,15 @@ def name_check(check, content, item):
         elif (u'号' in x):
             flag7 = c + 1
         elif (x in [u'辩称', u'未答辩', u'未出庭', u'未到庭']):
-            if flag8 == c:
-                tmp = y.remove(c)
-                clean_data['defense_hold_that'] = content[min(tmp)]
-            else:
-                if x in [u'未答辩', u'未出庭', u'未到庭']:
-                    try:
-                        tmp = min([{len(content[b]):b} for b in y]).values()[0]
-                        pdb.set_trace()
-                        clean_data['defense_hold_that'] = content[tmp]
-                    except:
-                        clean_data['defense_hold_that'] = content[c]
-                else:
+            if x in [u'未答辩', u'未出庭', u'未到庭']:
+                try:
+                    tmp = min([{len(content[b]):b} for b in y]).values()[0]
+                    # pdb.set_trace()
+                    clean_data['defense_hold_that'] = content[tmp]
+                except:
                     clean_data['defense_hold_that'] = content[c]
+            else:
+                clean_data['defense_hold_that'] = content[c]
             # pdb.set_trace()
         elif (x in [u'诉讼请求', u'诉称', u'诉请', u'起诉']) and (court_proceeding == u'一审'):
             tmp = content[c]
@@ -112,8 +108,7 @@ def name_check(check, content, item):
             # pdb.set_trace()
             flag2 = c
         elif (u'不服' in x) and (court_proceeding == u'二审'):
-            pass
-            # clean_data['accuser_hold_that'] = content[c]
+            clean_data['accuser_hold_that'] = content[c]
         elif (u'本院认为' in x):
             flag6 = c
             # clean_data['court_find'] = content[c]
@@ -177,7 +172,10 @@ def name_check(check, content, item):
             pass
     if flag5 and flag6:
         try:
-            clean_data['court_find'] = '|'.join(content[flag5 :flag6])
+            if (court_proceeding == u'二审'):
+                clean_data['origin_court_find'] = '|'.join(content[flag5 :flag6])
+            elif (court_proceeding == u'一审'):
+                clean_data['court_find'] = '|'.join(content[flag5 :flag6])
         except:
             pass
     if flag7 and flag8:
