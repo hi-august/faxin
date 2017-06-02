@@ -99,7 +99,12 @@ def gen_new_start_param(pp, info):
                 print('insert %s'%(p))
                 param.update_one({'param': p.strip()}, {'$set': data}, upsert=True)
     if u'裁判年份' not in p:
-        for zz in info['裁判年份'.decode('utf-8')]:
+        try:
+            ps = info['裁判年份'.decode('utf-8')]
+        except:
+            pdb.set_trace()
+            ps = []
+        for zz in ps:
             if zz:
                 new_p = u'%s,%s:%s'%(p, '裁判年份'.decode('utf-8'), zz)
                 data = {today: 1, 'param': new_p.strip(), 'type': source_type}
