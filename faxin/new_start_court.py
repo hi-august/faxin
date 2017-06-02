@@ -225,7 +225,10 @@ def send_court():
         pass
     gen_new_param()
         #  return
-    for p in param.find(query):
+    for p in param.find(
+            query,
+            no_cursor_timeout=True,
+    ):
         page = p.get('page', [])
         if p.get('pages', 1) > 100:
             if u'上传日期' in p.get('param', ''):
@@ -251,20 +254,24 @@ def send_court():
                     {'$set': {'finished': 1}},
                     upsert=False,
                 )
+                continue
             else:
                 data = {'param': p.get('param', ''), 'page': unfinished, 'pages': p.get('pages', 1), 'type': p['type']}
                 data = json.dumps(data)
                 logger.info('send to redis %s' % data)
                 r.lpush('court:start_urls', data)
+                continue
         else:
             data = {'param': p.get('param', ''), 'type': p['type']}
             data = json.dumps(data)
             logger.info('send to redis %s' % data)
             r.lpush('court:start_urls', data)
+            continue
         data = {'param': p.get('param', ''), 'type': p['type']}
         data = json.dumps(data)
         logger.info('send to redis %s' % data)
         r.lpush('court:start_urls', data)
+        continue
 
 # 发送doc_id到redis
 def send_court_doc():
