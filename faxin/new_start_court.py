@@ -105,7 +105,12 @@ def gen_new_start_param(pp, info):
                 data = {today: 1, 'param': new_p.strip(), 'type': source_type}
                 param.update_one({'param': new_p.strip()}, {'$set': data}, upsert=True)
     elif u'法院地域' not in p:
-        for a in info['法院地域'.decode('utf-8')]:
+        try:
+            ps = info['法院地域'.decode('utf-8')]
+        except:
+            pdb.set_trace()
+            ps = []
+        for a in ps:
             if a:
                 new_p = u'%s,%s:%s'%(p, '法院地域'.decode('utf-8'), a)
                 data = {today: 1, 'param': new_p.strip(), 'type': source_type}
