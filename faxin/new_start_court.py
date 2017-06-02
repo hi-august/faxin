@@ -89,6 +89,8 @@ def gen_new_param():
 def gen_new_start_param(pp, info):
     today = datetime.datetime.now().strftime('%Y%m%d')
     source_type = pp.get('type', '')
+    if source_type == u'民事案件' and not info:
+        info = category.find_one({u'文书类型': {'$exists': True}})
     p = pp['param']
     if u'案件类型' not in p:
         for y in [u'刑事案件', u'民事案件', u'行政案件', u'赔偿案件', u'执行案件']:
@@ -102,7 +104,6 @@ def gen_new_start_param(pp, info):
         try:
             ps = info['裁判年份'.decode('utf-8')]
         except:
-            pdb.set_trace()
             ps = []
         for zz in ps:
             if zz:
@@ -113,7 +114,6 @@ def gen_new_start_param(pp, info):
         try:
             ps = info['法院地域'.decode('utf-8')]
         except:
-            pdb.set_trace()
             ps = []
         for a in ps:
             if a:
