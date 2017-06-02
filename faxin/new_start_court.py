@@ -91,7 +91,7 @@ def gen_new_start_param(pp, info):
     source_type = pp.get('type', '')
     p = pp['param']
     if u'案件类型' not in p:
-        for y in [u'刑事案件', u'行政案件', u'赔偿案件', u'执行案件']:
+        for y in [u'刑事案件', u'民事案件', u'行政案件', u'赔偿案件', u'执行案件']:
             new_p = u'%s,案件类型:%s'%(p,y)
             t = param.find_one({'param': new_p.strip()})
             if not t:
@@ -241,10 +241,10 @@ def send_court():
             continue
         if u'上传日期' not in p.get('param', ''):
             continue
-        if u'一级案由:民事案由' in p.get('param', ''):
-            continue
-        if u'案件类型:民事案件' in p.get('param', ''):
-            continue
+        #  if u'一级案由:民事案由' in p.get('param', ''):
+            #  continue
+        #  if u'案件类型:民事案件' in p.get('param', ''):
+            #  continue
         if page:
             all_page = range(1, p.get('pages', 1)+1)
             unfinished = list(set(all_page) - set(page))
