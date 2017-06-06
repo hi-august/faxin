@@ -3,7 +3,7 @@
 import os
 
 PROXY_URL = "http://proxy.abuyun.com:9020"
-PROXY_USERINFO = "H1Q30O3ST003M06D:8568D0A9AC6EB8D6"
+PROXY_USERINFO = "H9IN46JH29Z543XD:87D004203561FB19"
 MONGODB_URL = 'mongodb://august:nana@114.215.148.175:27019/admin?authMechanism=SCRAM-SHA-1'
 
 REDIS_URL = "redis://:august, nana@114.215.148.175:6379"
