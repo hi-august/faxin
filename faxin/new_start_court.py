@@ -51,7 +51,7 @@ r = grs(REDIS_URL)
 def get_date():
     dates = []
     now = datetime.datetime.now()
-    default_date = datetime.datetime(2013, 7, 1, 0, 0)
+    default_date = datetime.datetime(2017, 4, 1, 0, 0)
     query_date = datetime.timedelta(days=1) + default_date
     # 爬取10天之内数据
     # query_date = now + datetime.timedelta(days=-1)
