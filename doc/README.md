@@ -1,4 +1,8 @@
 ##faxin和court爬取
+程序在/opt/faxin目录下
+主server: 114.215.148.175
+子server: 172.26.168.134,47.93.124.25,47.93.124.65
+日志/opt/faxin/faxin/process_items.log
 1. 目前faxin和court都是分布式爬取,
 通过主server下发到个slave server进行爬取,
 主server不进行爬取,只负责存储
