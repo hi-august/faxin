@@ -379,6 +379,7 @@ function getKey() {
 }
 // 对cookie vjkl5值进行加密
 // node court_js.js 1e9e7a9fff4045c30190180b802384a4cdf68069
-var key = getKey()
-console.log(key)
+var key = getKey();
+console.log(key);
+return key;
 
